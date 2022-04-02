@@ -192,54 +192,54 @@ func (p *GitPackage) Install(ctx context.Context, name, dir, version string) (st
 
 	// Optimization for GitHub sources: download a tarball archive of the requested
 	// version instead of cloning the entire
-	isGitHubRemote, err := regexp.MatchString(`^(https|ssh)://github\.com/.+$`, p.Source.Remote())
-	if isGitHubRemote {
-		// Let git ls-remote decide if "version" is a ref or a commit SHA in the unlikely
-		// but possible event that a ref is comprised of 40 or more hex characters
-		commitSha, err := remoteResolveRef(ctx, p.Source.Remote(), version)
+	// isGitHubRemote, err := regexp.MatchString(`^(https|ssh)://github\.com/.+$`, p.Source.Remote())
+	// if isGitHubRemote {
+	// 	// Let git ls-remote decide if "version" is a ref or a commit SHA in the unlikely
+	// 	// but possible event that a ref is comprised of 40 or more hex characters
+	// 	commitSha, err := remoteResolveRef(ctx, p.Source.Remote(), version)
 
-		// If the ref resolution failed and "version" looks like a SHA,
-		// assume it is one and proceed.
-		commitShaPattern := regexp.MustCompile("^([0-9a-f]{40,})$")
-		if commitSha == "" && commitShaPattern.MatchString(version) {
-			commitSha = version
-		}
+	// 	// If the ref resolution failed and "version" looks like a SHA,
+	// 	// assume it is one and proceed.
+	// 	commitShaPattern := regexp.MustCompile("^([0-9a-f]{40,})$")
+	// 	if commitSha == "" && commitShaPattern.MatchString(version) {
+	// 		commitSha = version
+	// 	}
 
-		archiveUrl := fmt.Sprintf("%s/archive/%s.tar.gz", strings.TrimSuffix(p.Source.Remote(), ".git"), commitSha)
-		archiveFilepath := fmt.Sprintf("%s.tar.gz", tmpDir)
+	// 	archiveUrl := fmt.Sprintf("%s/archive/%s.tar.gz", strings.TrimSuffix(p.Source.Remote(), ".git"), commitSha)
+	// 	archiveFilepath := fmt.Sprintf("%s.tar.gz", tmpDir)
 
-		defer os.Remove(archiveFilepath)
-		err = downloadGitHubArchive(archiveFilepath, archiveUrl)
-		if err == nil {
-			var ar *os.File
-			ar, err = os.Open(archiveFilepath)
-			defer ar.Close()
-			if err == nil {
-				// Extract the sub-directory (if any) from the archive
-				// If none specified, the entire archive is unpacked
-				err = gzipUntar(tmpDir, ar, p.Source.Subdir)
+	// 	defer os.Remove(archiveFilepath)
+	// 	err = downloadGitHubArchive(archiveFilepath, archiveUrl)
+	// 	if err == nil {
+	// 		var ar *os.File
+	// 		ar, err = os.Open(archiveFilepath)
+	// 		defer ar.Close()
+	// 		if err == nil {
+	// 			// Extract the sub-directory (if any) from the archive
+	// 			// If none specified, the entire archive is unpacked
+	// 			err = gzipUntar(tmpDir, ar, p.Source.Subdir)
 
-				// Move the extracted directory to its final destination
-				if err == nil {
-					if err := os.MkdirAll(filepath.Dir(destPath), os.ModePerm); err != nil {
-						panic(err)
-					}
-					if err := os.Rename(path.Join(tmpDir, p.Source.Subdir), destPath); err != nil {
-						panic(err)
-					}
-				}
-			}
-		}
+	// 			// Move the extracted directory to its final destination
+	// 			if err == nil {
+	// 				if err := os.MkdirAll(filepath.Dir(destPath), os.ModePerm); err != nil {
+	// 					panic(err)
+	// 				}
+	// 				if err := os.Rename(path.Join(tmpDir, p.Source.Subdir), destPath); err != nil {
+	// 					panic(err)
+	// 				}
+	// 			}
+	// 		}
+	// 	}
 
-		if err == nil {
-			return commitSha, nil
-		}
+	// 	if err == nil {
+	// 		return commitSha, nil
+	// 	}
 
-		// The repository may be private or the archive download may not work
-		// for other reasons. In any case, fall back to the slower git-based installation.
-		color.Yellow("archive install failed: %s", err)
-		color.Yellow("retrying with git...")
-	}
+	// 	// The repository may be private or the archive download may not work
+	// 	// for other reasons. In any case, fall back to the slower git-based installation.
+	// 	color.Yellow("archive install failed: %s", err)
+	// 	color.Yellow("retrying with git...")
+	// }
 
 	gitCmd := func(args ...string) *exec.Cmd {
 		cmd := exec.CommandContext(ctx, "git", args...)
