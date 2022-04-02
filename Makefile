@@ -2,7 +2,7 @@
 
 SHELL=/bin/bash
 
-GITHUB_URL=github.com/jsonnet-bundler/jsonnet-bundler
+GITHUB_URL=github.com/shinhwagk/jsonnet-bundler
 VERSION := $(shell git describe --tags --dirty --always)
 OUT_DIR=_output
 BIN?=jb
